@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tic-tac-toe</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    
+    <h1 id="headline">Tic-Tac-Toe</h1>
+    <p id="turn">X's turn</p>     
+    <button id="resetBtn" >restart</button> <!--Onclick entfernen und Eventlistener einfügen--> 
+
+    <div id="score">
+        X Wins: <span id="xScoreDisplay">0</span> <br>
+        O Wins: <span id="oScoreDisplay">0</span>
+    </div>
+    
+
+    <div id="board">
+        <!--Entfernen des onclick-Attributs und ersetzten mit Eventlistener. Ersetzen der id's mit data-index-->
+        <!--Hinzufügen des data-index-Attributs-->
+        <div data-index="0" class="box tic left"></div> <!--tic = 1. Reihe, tac = 2. Reihe, toe = 3. Reihe-->
+        <div data-index="1" class="box tic middle"></div>
+        <div data-index="2" class="box tic right"></div>
+        <div data-index="3" class="box tac left"></div>
+        <div data-index="4" class="box tac middle"></div>
+        <div data-index="5" class="box tac right"></div>
+        <div data-index="6" class="box toe left"></div>
+        <div data-index="7" class="box toe middle"></div>
+        <div data-index="8" class="box toe right"></div>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>

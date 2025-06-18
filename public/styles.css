@@ -1,0 +1,77 @@
+body{
+    box-sizing: border-box;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#headline{
+    box-sizing: border-box;
+    text-align: center;
+    width: 100%;
+    font-size: 2.4rem;
+}
+#turn{
+    font-size: 1.7rem;
+    transform: translateY(-20px);
+    padding: 2px;
+    border-radius: 7px;
+}
+#resetBtn{
+    font-size: 1.2rem;
+    border: none;
+    background-color: lightblue;
+    transform: translateY(-20px);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 8px;
+}
+#resetBtn:hover{
+    background-color: hsl(195, 53%, 70%);
+}
+#score{
+    font-size: 1.3rem;
+    transform: translate(-160px, -55px);
+}
+#board{
+    transform: translateY(-40px);
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0px;
+
+    justify-content: center;
+    align-items: center;
+    align-content: center; /*weg mit dem Platz dazwischen*/
+    width: 90vmin; /* vmin nimmt den kleineren Viewport hier 90%*/
+    height: 90vmin;
+    max-height: 450px;
+    max-width: 450px;
+}
+.box{
+    font-size: 3rem;
+    box-sizing: border-box;
+    width: 100%; /* ist 100% da es sich nun auf eine der drei Spalten bezieht*/
+    max-width: 150px;
+    aspect-ratio: 1/1; /* um es quadratisch zu machen*/
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.box:hover{
+    background-color: hsl(0, 0%, 95%);
+}
+.tic{
+    border-bottom: 1px solid black;
+}
+.tac{
+    border-bottom: 1px solid black;
+}
+.left{
+    border-right: 1px solid black;
+}
+.middle{
+    border-right: 1px solid black;
+}
