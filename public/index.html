@@ -10,7 +10,7 @@
     
     <h1 id="headline">Tic-Tac-Toe</h1>
     <p id="turn">X's turn</p>     
-    <button id="resetBtn" >restart</button> <!--Onclick entfernen und Eventlistener einfügen--> 
+    <button id="restartBtn" >restart</button> <!--Onclick entfernen und Eventlistener einfügen--> 
 
     <div id="score">
         X Wins: <span id="xScoreDisplay">0</span> <br>
@@ -31,6 +31,8 @@
         <div data-index="7" class="box toe middle"></div>
         <div data-index="8" class="box toe right"></div>
     </div>
+    <!--Hier verlinken wir den socket.io Server--> <!--Dadurch können wir beim Client z.B. auf das io Objekt zugreifen-->
+    <script src="/socket.io/socket.io.min.js"></script>
     <script src="scripts.js"></script>
 </body>
 </html>

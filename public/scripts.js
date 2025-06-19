@@ -1,6 +1,32 @@
+const socket = io('http://localhost:3000', {
+
+})
+
+socket.on('connect', () => {
+    console.log('Verbunden mit Server als', socket.id);
+});
+
+
+
+//benachrichtigt, wenn das Spiel voll ist
+socket.on('full', message => {
+    alert(message)
+})
+
+
+socket.on('role', role => {
+    // console.log(role)
+    return role
+})
+
+socket.on('restartRequest', () => {
+    console.log('The other user wants to restart the game')
+})
+
+
 const boxes = document.querySelectorAll(".box");
 const turn = document.getElementById("turn");
-const resetBtn = document.getElementById("resetBtn");
+const restartBtn = document.getElementById("restartBtn");
 const xScoreDisplay = document.getElementById("xScoreDisplay");
 const oScoreDisplay = document.getElementById("oScoreDisplay");
 
@@ -28,7 +54,10 @@ boxes.forEach(box => {
     })
 })
 
-resetBtn.addEventListener('click', () => reset(startingPlayer));
+restartBtn.addEventListener('click', () => {
+    console.log('asked for restart')
+    socket.emit('restart')
+});
 
 function clicked(index){
     if(running){ // verhindert, dass Felder nach einem Sieg angewählt werden können
