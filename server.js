@@ -11,6 +11,20 @@ const io = socketio(expressServer, {  // das ist der socket.io Server
 const maxPlayers = 2;
 let connectedPlayers = [];
 
+let roles = ['X', 'O']
+
+let board = Array(9).fill('');
+
+let startingPlayer = 'X';
+let currentPlayer = startingPlayer;
+let scoreX = 0;
+let scoreO = 0;
+let running = true;
+
+
+
+
+
 io.on('connection', socket => { //wenn sich ein Client mit dem Server verbindet
     // lehnt die Verbindung ab, wenn schon 2 Spieler verbunden sind
     if(connectedPlayers.length >= maxPlayers){
@@ -23,27 +37,48 @@ io.on('connection', socket => { //wenn sich ein Client mit dem Server verbindet
     connectedPlayers.push(socket.id)
 
     socket.on('disconnect', () => {
-        connectedPlayers = connectedPlayers.filter(id => id!==socket.id);
+        connectedPlayers = connectedPlayers.filter(id => id !== socket.id);
         console.log(`${socket.id} has disconnected from Server`);
-    })
 
-    socket.on('restart', () => {
-        if(socket.id === connectedPlayers[0]){
-            console.log(`${socket.id} requested reset`);
-            socket.broadcast.emit('restartRequest', socket.id) //sendet nur an den anderen Client
+        // Rolle wieder freigeben
+        if (socket.assignedRole) {
+            roles.push(socket.assignedRole);
+            console.log(`Free Role: ${socket.assignedRole}`);
         }
     })
 
-
-
-    // Rollenverteilung
-    // 1. Spieler = X und 2. Spieler = O
-    if(connectedPlayers[0] === socket.id){
-        socket.emit('role', 'X');
-    }
-    else{
-        socket.emit('role', 'O');
-    }
+    // kommt, wenn der restart Button bei einem Client gedrückt wird
+    socket.on('restart', () => {
+        console.log(`${socket.id} requested restart`); 
+        socket.broadcast.emit('restartRequest', socket.id) //sendet nur an den anderen Client
+    })
     
+    // kommt, wenn der zweite Client die restart Anfrage annimmt
+    socket.on('exRestart', () => {
+        console.log('Game gets restarted')
+    })
+
+    // kommt, wenn der zweite Client die restart Anfrage ablehnt
+    socket.on('notRestart', () => {
+        console.log('Game gets not restarted')
+        socket.broadcast.emit('declRestart', 'The other user has declined the restart');
+    })
+
+    
+    // Rollenverteilung
+    if (roles.length > 0) {
+        const roleIndex = Math.floor(Math.random() * roles.length);
+        const assignedRole = roles[roleIndex];
+        socket.assignedRole = assignedRole;
+        socket.emit('role', assignedRole);
+
+        // entferne vergebene Rolle aus Liste
+        roles = roles.filter(role => role !== assignedRole);
+    } else {
+        // wenn keine Rollen frei sind, Verbindung abbrechen
+        socket.emit('full', 'No roles left');
+        socket.disconnect(true);
+    }
+
 
 })

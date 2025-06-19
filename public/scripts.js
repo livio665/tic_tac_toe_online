@@ -2,6 +2,15 @@ const socket = io('http://localhost:3000', {
 
 })
 
+
+const boxes = document.querySelectorAll(".box");
+const turn = document.getElementById("turn");
+const restartBtn = document.getElementById("restartBtn");
+const xScoreDisplay = document.getElementById("xScoreDisplay");
+const oScoreDisplay = document.getElementById("oScoreDisplay");
+
+let myRole = null //X/O, wird noch nicht definiert
+
 socket.on('connect', () => {
     console.log('Verbunden mit Server als', socket.id);
 });
@@ -13,40 +22,78 @@ socket.on('full', message => {
     alert(message)
 })
 
-
 socket.on('role', role => {
     // console.log(role)
-    return role
+    myRole = role
+    turn.textContent = `Your role is ${myRole}`;
+    setTimeout(() => turn.textContent = "X's turn", 2000);
 })
+
+// setTimeout(() => console.log(myRole),5000) //da socket.on('role') asynchron ist
+
+let acceptBtn = null
+let declineBtn = null
+
+// entfernt den accept und decline button aus dem DOM
+function removeRestartButtons(){
+    if(acceptBtn){
+        document.body.removeChild(acceptBtn);
+        acceptBtn = null
+    }
+    if(declineBtn){
+        document.body.removeChild(declineBtn)
+        declineBtn = null
+    }
+    restartBtn.style.display = 'inline'
+}
+
 
 socket.on('restartRequest', () => {
     console.log('The other user wants to restart the game')
+    turn.textContent = 'The other player wants to restart the game.'
+    // erstellt die buttons nur, wenn sie noch nicht existieren
+     if (!acceptBtn && !declineBtn) {
+        acceptBtn = document.createElement('button');
+        declineBtn = document.createElement('button');
+
+        acceptBtn.textContent = 'accept';
+        declineBtn.textContent = 'decline';
+        acceptBtn.style.backgroundColor = 'lightgreen';
+        declineBtn.style.backgroundColor = 'coral';
+        acceptBtn.classList.add('restartBtn');
+        declineBtn.classList.add('restartBtn');
+
+        document.body.insertBefore(acceptBtn, restartBtn);
+        document.body.insertBefore(declineBtn, restartBtn);
+    }
+    
+    restartBtn.style.display = 'none'
+
+    acceptBtn.addEventListener('click', () => {
+        console.log('restart has been accepted')
+        socket.emit('exRestart') //execute Restart
+        removeRestartButtons()
+    })
+    declineBtn.addEventListener('click', () => {
+        console.log('restart has been declined')
+        socket.emit('notRestart')
+        removeRestartButtons()
+    })
+})
+
+socket.on('declRestart', (message) => {
+    turn.textContent = message
 })
 
 
-const boxes = document.querySelectorAll(".box");
-const turn = document.getElementById("turn");
-const restartBtn = document.getElementById("restartBtn");
-const xScoreDisplay = document.getElementById("xScoreDisplay");
-const oScoreDisplay = document.getElementById("oScoreDisplay");
-
-
-let board = Array(9).fill('');
-
 // Die einzelnen Felder müssen nun nicht mehr einzeln abgespeichert werden
-
-
-let startingPlayer = 'X';
-let currentPlayer = startingPlayer;
-let scoreX = 0;
-let scoreO = 0;
-let running = true;
 
 
 // Für jedes Feld wird nun ein Klick-Event eingefügt
 boxes.forEach(box => {
     box.addEventListener('click', event => {
-        const index = event.target.dataset.index;
+        const index = event.target.dataset.index; // gibt den data-index aus dem HTML-File aus
+        socket.emit('played', index);
         //console.log(typeof(+index));
         // +index, da dataset.index einen String ausgibt und wir eine Zahl wollen.
         //  + wandelt den String in eine Zahl um
