@@ -1,7 +1,7 @@
+// So verbindet sich der Client mit dem Server
 const socket = io('http://localhost:3000', {
 
 })
-
 
 const boxes = document.querySelectorAll(".box");
 const turn = document.getElementById("turn");
@@ -11,25 +11,32 @@ const oScoreDisplay = document.getElementById("oScoreDisplay");
 
 let myRole = null //X/O, wird noch nicht definiert
 
+// Wird ausgefüht, nachdem der Client sich mit dem Server verbunden hat
 socket.on('connect', () => {
-    console.log('Verbunden mit Server als', socket.id);
+    console.log('Connected to server as', socket.id);
 });
 
 
+socket.on('clearWins', () => {
+    xScoreDisplay.textContent = '0'
+    oScoreDisplay.textContent = '0'
+})
+
+socket.on('newPlayer', (message) => {
+    turn.textContent = message
+})
 
 //benachrichtigt, wenn das Spiel voll ist
 socket.on('full', message => {
     alert(message)
 })
 
+// Nach der Rollenzuteilung vom Server
 socket.on('role', role => {
     // console.log(role)
     myRole = role
     turn.textContent = `Your role is ${myRole}`;
-    setTimeout(() => turn.textContent = "X's turn", 2000);
 })
-
-// setTimeout(() => console.log(myRole),5000) //da socket.on('role') asynchron ist
 
 let acceptBtn = null
 let declineBtn = null
@@ -47,8 +54,17 @@ function removeRestartButtons(){
     restartBtn.style.display = 'inline'
 }
 
+// Nach einem Sieg, Unentschieden oder restart wenn das Feld geleert wird
+socket.on('clearBoard', () => {
+    boxes.forEach(box => {
+        box.textContent = '';
+    })
+})
 
+
+// Wenn ein Spieler restart drückt, dann wird der andere um Zustimmung gebeten mit diesem Code
 socket.on('restartRequest', () => {
+    tempText = turn.textContent // ich setze tempText auf den textContent, damit ich diesen nach dem Code wieder einfügen kann
     console.log('The other user wants to restart the game')
     turn.textContent = 'The other player wants to restart the game.'
     // erstellt die buttons nur, wenn sie noch nicht existieren
@@ -78,109 +94,63 @@ socket.on('restartRequest', () => {
         console.log('restart has been declined')
         socket.emit('notRestart')
         removeRestartButtons()
+        turn.textContent = tempText;
     })
 })
 
+// Wenn die restart Anfrage des Clients abgelehnt wurde
 socket.on('declRestart', (message) => {
     turn.textContent = message
 })
 
-
-// Die einzelnen Felder müssen nun nicht mehr einzeln abgespeichert werden
-
-
-// Für jedes Feld wird nun ein Klick-Event eingefügt
-boxes.forEach(box => {
-    box.addEventListener('click', event => {
-        const index = event.target.dataset.index; // gibt den data-index aus dem HTML-File aus
-        socket.emit('played', index);
-        //console.log(typeof(+index));
-        // +index, da dataset.index einen String ausgibt und wir eine Zahl wollen.
-        //  + wandelt den String in eine Zahl um
-        clicked(+index); 
-    })
+// Wenn einer der beiden Spieler seinen Zug gemacht hat
+socket.on('clicked', (board) => {
+    // console.log(board); //funktioniert
+    for(let i=0; i<=8; i++){
+        boxes[i].textContent = board[i]
+    }
 })
 
+// Signalisieren, dass ein Spieler gewonnen hat
+socket.on('win', (winMessage) => {
+    turn.textContent = winMessage;
+})
+
+// Zum Anpassen der Scoreanzeige
+socket.on('increaseScore', (score, player) => {
+    if(player === 'X'){
+        xScoreDisplay.textContent = score
+    }
+    else{
+        oScoreDisplay.textContent = score
+    }
+})
+
+// Wenn das Spiel unentschieden endet
+socket.on('draw', (message) => {
+    turn.textContent = message
+})
+
+// Wenn ein Spieler gespielt hat und jetzt der andere dran ist
+socket.on('nextTurn', (nextPlayer) => {
+    if(nextPlayer === myRole){
+        turn.textContent = 'Your turn'
+    }
+    else{
+        turn.textContent = "Enemie's turn"
+    }
+})
+
+// Klick-Event für den restart Button
 restartBtn.addEventListener('click', () => {
     console.log('asked for restart')
     socket.emit('restart')
 });
 
-function clicked(index){
-    if(running){ // verhindert, dass Felder nach einem Sieg angewählt werden können
-        //überprüfen ob das Feld leer ist    
-        if(board[index] !== ''){
-            return; //tut nichts, wenn es schon belegt ist
-        }
-
-        //Spielzug
-        board[index] = currentPlayer;
-        boxes[index].textContent = currentPlayer;
-
-        // Gewinnüberprüfung
-        // ist jetzt der selbe Code für beide Spieler und nicht mehr getrennt
-        if( //vertikalen
-            board[0] === currentPlayer && board[1] === currentPlayer && board[2] === currentPlayer ||
-            board[3] === currentPlayer && board[4] === currentPlayer && board[5] === currentPlayer ||
-            board[6] === currentPlayer && board[7] === currentPlayer && board[8] === currentPlayer ||
-            //horizontalen
-            board[0] === currentPlayer && board[3] === currentPlayer && board[6] === currentPlayer ||
-            board[1] === currentPlayer && board[4] === currentPlayer && board[7] === currentPlayer ||
-            board[2] === currentPlayer && board[5] === currentPlayer && board[8] === currentPlayer ||
-            //diagonalen
-            board[0] === currentPlayer && board[4] === currentPlayer && board[8] === currentPlayer ||
-            board[2] === currentPlayer && board[4] === currentPlayer && board[6] === currentPlayer
-
-        ){
-            running = false;
-            // Die Bilder durch den Buchstaben ersetzt, da das viel einfacher ist
-            turn.textContent = currentPlayer + ' wins!'
-            updateScore(currentPlayer);
-        }
-        //indexOf gibt den Index des ersten leeren Feldes zurück
-        //wenn kein leeres Feld vorhanden ist gibt es den Wert -1 zurück
-        else if(board.indexOf('') === -1){ 
-            turn.textContent = 'Draw';
-            setTimeout(() => reset(startingPlayer), 1500);
-        }
-        else{
-            if(currentPlayer === 'X'){
-                currentPlayer = 'O';
-            }
-            else{
-                currentPlayer = 'X';
-            }
-            turn.textContent = currentPlayer + "'s turn";
-        }
-    }
-}    
-
-// Da die Gewinnerkennung jetzt für beide Spieler gilt, verwende ich hier eine separate Funktion
-function updateScore(player){
-    if(player === 'X'){
-        scoreX += 1;
-        xScoreDisplay.textContent = scoreX;
-    }
-    else{
-        scoreO += 1;
-        oScoreDisplay.textContent = scoreO;
-    }
-}
-
-function reset(startingPlayer){
-    board = Array(9).fill('');
-    running = true;
-    boxes.forEach(box => {
-        box.textContent = '';
+// Klick-Event für jedes Feld
+boxes.forEach(box => {
+    box.addEventListener('click', event => {
+        const index = event.target.dataset.index; // gibt den data-index aus dem HTML-File aus
+        socket.emit('played', +index);
     })
-    if(startingPlayer === 'X'){
-        startingPlayer = 'O';
-        currentPlayer = 'O';
-        turn.textContent = "O's turn"
-    }
-    else{
-        startingPlayer = 'X';
-        currentPlayer = 'X';
-        turn.textContent = "X's turn"
-    }
-}
+})
